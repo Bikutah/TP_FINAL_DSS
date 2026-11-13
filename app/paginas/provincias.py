@@ -40,8 +40,7 @@ seleccion = st.session_state["provincia"]
 
 ui.encabezado(
     "¿Dónde conviene actuar y con qué?",
-    "Elegí un perfil: el mapa y el ranking muestran en qué provincias pesa más o menos que en el total "
-    "del país. Tocá una provincia para ver su detalle.",
+    "Elegí un perfil y tocá una provincia para ver su detalle.",
 )
 
 perfil = st.segmented_control(
@@ -64,7 +63,7 @@ tabla["valor_txt"] = [pct(v) for v in tabla["valor"]]
 col_mapa, col_ranking = st.columns([5, 6], gap="medium")
 
 with col_mapa, ui.tarjeta("mapa"):
-    ui.titulo_tarjeta("Comparado con el país", f"{perfil} · país {pct(valor_pais)}")
+    ui.titulo_tarjeta("¿Dónde está por encima del país?", f"{perfil} · país {pct(valor_pais)}")
     graficos.mostrar(
         graficos.mapa(tabla, datos.geojson(), seleccion, perfil),
         key="mapa", on_select="rerun", selection_mode="points",
@@ -72,9 +71,11 @@ with col_mapa, ui.tarjeta("mapa"):
     ui.referencias_mapa()
 
 with col_ranking, ui.tarjeta("ranking"):
-    ui.titulo_tarjeta("Ranking de provincias", f"% de estudiantes en {perfil}. La línea marca el país.")
+    ui.titulo_tarjeta(f"% de estudiantes en {perfil}", "Arriba de la barra gris, más que el país; abajo, menos.")
+    ui.referencias([("barrita", estilo.COLOR_COMPARACION[perfil], "Provincia"),
+                    ("barrita", estilo.COLOR_PAIS, "Todo el país")])
     graficos.mostrar(
-        graficos.ranking(tabla.sort_values("valor", ascending=False), valor_pais, seleccion),
+        graficos.ranking(tabla, valor_pais, seleccion, perfil),
         key="ranking", on_select="rerun", selection_mode="points",
     )
 
@@ -96,7 +97,7 @@ with ui.tarjeta("detalle"):
         cuadrito = estilo.CATEGORIAS_VS_PAIS[nivel][1]
         por_que = ""
         if accion["perfil_prioritario"] and not pd.isna(accion["perfil_prioritario"]):
-            por_que = (f'<span class="texto">Es el perfil en el que {escape(seleccion)} más supera al país: '
+            por_que = (f'<span class="texto">Porque es donde {escape(seleccion)} más supera al país: '
                        f'{escape(accion["perfil_prioritario"])} (+{ui.num(accion["exceso_pct"], 0)}%).</span>')
         st.html(
             f'<div class="dss-caja dato"><span class="chico">{escape(perfil)}</span>'
@@ -110,17 +111,19 @@ with ui.tarjeta("detalle"):
         )
 
     with c_mezcla:
-        ui.titulo_tarjeta("Mezcla de perfiles", "Cada barra es el 100% de los estudiantes.")
+        ui.titulo_tarjeta(f"¿Cómo se reparte {seleccion}?", "Cada barra suma 100%. Abajo, el país.")
         mezcla = pd.DataFrame([info[estilo.PERFILES], pais[estilo.PERFILES]])
         graficos.mostrar(graficos.barras_apiladas(mezcla, [seleccion, "País"], alto_fila=56))
         ui.referencias([("punto", estilo.COLOR_PERFIL[p], p) for p in estilo.PERFILES])
 
     with c_edad:
-        ui.titulo_tarjeta("Por edad", f"% en {perfil} a cada edad. La línea es el país.")
+        ui.titulo_tarjeta(f"{perfil} por edad", f"% de cada edad en este perfil")
+        ui.referencias([("barrita", estilo.COLOR_COMPARACION[perfil], seleccion),
+                        ("barrita", estilo.COLOR_PAIS, "País")])
         filas = por_prov_edad[por_prov_edad["provincia"] == seleccion].set_index("edad")
-        graficos.mostrar(graficos.barras_verticales(
-            [str(e) for e in filas.index], filas[perfil].tolist(), estilo.COLOR_PERFIL[perfil],
-            pais=edad_pais.loc[filas.index, perfil].tolist(), titulo_x="Edad (años)",
+        graficos.mostrar(graficos.columnas_contra_pais(
+            [str(e) for e in filas.index], filas[perfil].tolist(), edad_pais.loc[filas.index, perfil].tolist(),
+            perfil, seleccion, titulo_x="Edad (años)",
         ))
 
 ui.nota("* Nombre de provincia deducido del código del dataset: falta confirmarlo con el informe oficial. "

@@ -37,14 +37,13 @@ st.html(
 
 col_codo, col_dendro = st.columns(2, gap="medium")
 with col_codo, ui.tarjeta("codo"):
-    ui.titulo_tarjeta("Método del codo", "Inercia dentro de los grupos para k de 1 a 10.")
+    ui.titulo_tarjeta(f"Desde k = {k}, sumar grupos mejora poco",
+                      "Método del codo: inercia (millones) según la cantidad de grupos.")
     graficos.mostrar(graficos.codo(metricas["codo"], k))
 
 with col_dendro, ui.tarjeta("dendrograma"):
-    ui.titulo_tarjeta(
-        "Dendrograma de control",
-        f"Ward sobre una muestra de {num(dendro['muestra'], 0)} estudiantes. Cortando en la línea quedan {k} grupos.",
-    )
+    ui.titulo_tarjeta(f"Cortando en la línea quedan {k} grupos",
+                      f"Dendrograma (Ward) sobre una muestra de {num(dendro['muestra'], 0)} estudiantes.")
     graficos.mostrar(graficos.dendrograma(dendro["icoord"], dendro["dcoord"], dendro["corte"], k))
 
 estables = sum(s["ari"] >= 0.99 for s in metricas["semillas"])
@@ -52,9 +51,9 @@ silueta = metricas["silueta"][str(k)]
 st.html(
     '<section class="dss-confianza" aria-label="Cuánto podemos confiar">'
     f'<div class="verde"><span class="valor">{estables} de {len(metricas["semillas"])}</span>'
-    '<span class="texto">semillas llegan a los mismos grupos (ARI de 0,99 o más contra la mejor).</span></div>'
+    '<span class="texto">semillas dan los mismos grupos (ARI ≥ 0,99; 1 = idénticos).</span></div>'
     f'<div><span class="valor">{num(silueta, 2)}</span>'
-    f'<span class="texto">de silueta con k = {k}: los perfiles se superponen en parte, algo esperable con '
+    f'<span class="texto">de silueta (de -1 a 1): los perfiles se superponen en parte, algo esperable con '
     'respuestas sí/no.</span></div>'
     '<div><span class="valor">Sin estandarizar</span>'
     '<span class="texto">Todas las variables son 0/1: la distancia cuenta en cuántas respuestas difieren '

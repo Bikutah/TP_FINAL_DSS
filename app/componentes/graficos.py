@@ -48,41 +48,69 @@ def barras_apiladas(tabla: pd.DataFrame, etiquetas: list[str], alto_fila: int = 
 
 
 # --- Perfiles --------------------------------------------------------------
-def barras_vector_promedio(filas: pd.DataFrame, perfil: str, margen_izq: int = 250) -> go.Figure:
-    """Barras del vector de promedios del perfil con una marca en el total del país."""
-    color = estilo.COLOR_PERFIL[perfil]
+def barras_contra_pais(etiquetas: list[str], valores: list[float], pais: list[float], nombre: str,
+                       margen_izq: int = 250, mostrar_escala: bool = False) -> go.Figure:
+    """Dos barras por pregunta: el perfil (en su color) y todo el país (en gris), cada una con su número."""
+    color = estilo.COLOR_COMPARACION[nombre] if nombre in estilo.COLOR_COMPARACION else estilo.ACENTO
     fig = go.Figure()
     fig.add_bar(
-        x=filas[perfil], y=filas["descripcion"], orientation="h", name=perfil,
-        marker=dict(color=color, cornerradius=5),
-        text=[pct(v, 0) for v in filas[perfil]], textposition="outside", cliponaxis=False,
+        x=valores, y=etiquetas, orientation="h", name=nombre,
+        marker=dict(color=color, cornerradius=3),
+        text=[f"<b>{pct(v, 0)}</b>" for v in valores], textposition="outside", cliponaxis=False,
         textfont=dict(color=estilo.TEXTO, size=13),
-        customdata=[[pct(a), pct(b)] for a, b in zip(filas[perfil], filas["Total país"])],
-        hovertemplate="<b>%{y}</b><br>Perfil: %{customdata[0]}<br>País: %{customdata[1]}<extra></extra>",
+        customdata=[pct(v) for v in valores], hovertemplate=f"<b>%{{y}}</b><br>{nombre}: %{{customdata}}<extra></extra>",
     )
-    fig.add_scatter(
-        x=filas["Total país"], y=filas["descripcion"], mode="markers", name="Total del país",
-        marker=dict(symbol="line-ns-open", size=26, color=estilo.LINEA_PAIS, line=dict(width=3, color=estilo.LINEA_PAIS)),
-        hoverinfo="skip",
+    fig.add_bar(
+        x=pais, y=etiquetas, orientation="h", name="Todo el país",
+        marker=dict(color=estilo.COLOR_PAIS, cornerradius=3),
+        text=[pct(v, 0) for v in pais], textposition="outside", cliponaxis=False,
+        textfont=dict(color=estilo.TEXTO_SUAVE, size=12),
+        customdata=[pct(v) for v in pais], hovertemplate="<b>%{y}</b><br>Todo el país: %{customdata}<extra></extra>",
     )
-    fig.update_layout(
-        showlegend=False, bargap=0.38, height=38 * len(filas) + 16,
-        margin=dict(l=margen_izq, r=48, t=4, b=4),
+    alto = 50 * len(etiquetas) + (30 if mostrar_escala else 8)
+    fig.update_layout(showlegend=False, barmode="group", bargap=0.28, bargroupgap=0.12, height=alto,
+                      margin=dict(l=margen_izq, r=44, t=4, b=26 if mostrar_escala else 4))
+    fig.update_yaxes(autorange="reversed", automargin=False, showgrid=False, tickfont=dict(size=14),
+                     ticklabelstandoff=10, showline=True, linecolor=estilo.LINEA_EJE, fixedrange=True)
+    fig.update_xaxes(range=[0, 100], tickvals=[0, 25, 50, 75, 100], ticksuffix="%", showgrid=True,
+                     gridcolor=estilo.GRILLA, showline=False, showticklabels=mostrar_escala,
+                     tickfont=dict(size=12, color=estilo.TEXTO_SUAVE), fixedrange=True)
+    return fig
+
+
+def columnas_contra_pais(etiquetas: list[str], valores: list[float], pais: list[float], nombre: str,
+                         nombre_valores: str, alto: int = 250, titulo_x: str = "") -> go.Figure:
+    """Barras verticales de a pares: el lugar elegido (en color) y el país (en gris)."""
+    color = estilo.COLOR_COMPARACION.get(nombre, estilo.ACENTO)
+    fig = go.Figure()
+    fig.add_bar(
+        x=etiquetas, y=valores, name=nombre_valores, marker=dict(color=color, cornerradius=3),
+        text=[f"<b>{pct(v, 0)}</b>" for v in valores], textposition="outside", cliponaxis=False,
+        textfont=dict(color=estilo.TEXTO, size=12),
+        customdata=[pct(v) for v in valores],
+        hovertemplate=f"{titulo_x} %{{x}} · {nombre_valores}: %{{customdata}}<extra></extra>",
     )
-    fig.update_yaxes(autorange="reversed", automargin=False, showgrid=False, showline=False,
-                     tickfont=dict(size=14))
-    fig.update_xaxes(range=[0, 100])
-    _sin_ejes(fig)
+    fig.add_bar(
+        x=etiquetas, y=pais, name="País", marker=dict(color=estilo.COLOR_PAIS, cornerradius=3),
+        text=[pct(v, 0) for v in pais], textposition="outside", cliponaxis=False,
+        textfont=dict(color=estilo.TEXTO_SUAVE, size=12),
+        customdata=[pct(v) for v in pais], hovertemplate=f"{titulo_x} %{{x}} · País: %{{customdata}}<extra></extra>",
+    )
+    tope = max(max(valores), max(pais))
+    fig.update_layout(showlegend=False, barmode="group", bargap=0.3, bargroupgap=0.08, height=alto,
+                      margin=dict(l=4, r=4, t=20, b=4))
+    fig.update_yaxes(visible=False, range=[0, tope * 1.15], fixedrange=True)
+    fig.update_xaxes(showline=True, linecolor=estilo.LINEA_EJE, showgrid=False, fixedrange=True,
+                     type="category", title_text=titulo_x, title_font=dict(size=13, color=estilo.TEXTO_SUAVE))
     return fig
 
 
 def barras_verticales(etiquetas: list[str], valores: list[float], color: str,
                       pais: list[float] | None = None, alto: int = 240, titulo_x: str = "") -> go.Figure:
+    """Barras verticales (por edad). Los números van en una fila fija arriba, para no pisar la marca del país."""
     fig = go.Figure()
     fig.add_bar(
-        x=etiquetas, y=valores, marker=dict(color=color, cornerradius=5),
-        text=[pct(v, 0) for v in valores], textposition="outside", cliponaxis=False,
-        textfont=dict(color=estilo.TEXTO, size=13),
+        x=etiquetas, y=valores, marker=dict(color=color, cornerradius=4),
         customdata=[pct(v) for v in valores],
         hovertemplate=f"<b>{titulo_x} %{{x}}</b>: %{{customdata}}<extra></extra>",
     )
@@ -91,11 +119,19 @@ def barras_verticales(etiquetas: list[str], valores: list[float], color: str,
         tope = max(tope, max(pais))
         fig.add_scatter(
             x=etiquetas, y=pais, mode="markers", name="País",
-            marker=dict(symbol="line-ew-open", size=34, color=estilo.LINEA_PAIS, line=dict(width=3, color=estilo.LINEA_PAIS)),
+            marker=dict(symbol="line-ew-open", size=30, color=estilo.LINEA_PAIS, line=dict(width=2.5, color=estilo.LINEA_PAIS)),
             customdata=[pct(v) for v in pais], hovertemplate="País: %{customdata}<extra></extra>",
         )
-    fig.update_layout(showlegend=False, bargap=0.35, height=alto, margin=dict(l=4, r=4, t=24, b=4))
-    fig.update_yaxes(visible=False, range=[0, tope * 1.18], fixedrange=True)
+        # Rótulo "país" sobre la raya que más sobresale de su barra
+        i = max(range(len(pais)), key=lambda j: pais[j] - valores[j])
+        fig.add_annotation(x=i, y=pais[i], yshift=8, yanchor="bottom", showarrow=False, text="país",
+                           font=dict(size=12, color=estilo.TEXTO))
+    # x = posición de la barra (0, 1, 2…): si se pasa "13" como texto, Plotly lo toma como posición 13
+    for posicion, valor in enumerate(valores):
+        fig.add_annotation(x=posicion, y=1, yref="paper", yanchor="bottom", showarrow=False,
+                           text=f"<b>{pct(valor, 0)}</b>", font=dict(size=13, color=estilo.TEXTO))
+    fig.update_layout(showlegend=False, bargap=0.35, height=alto, margin=dict(l=4, r=4, t=26, b=4))
+    fig.update_yaxes(visible=False, range=[0, tope * 1.08], fixedrange=True)
     fig.update_xaxes(showline=True, linecolor=estilo.LINEA_EJE, showgrid=False, fixedrange=True,
                      type="category", title_text=titulo_x, title_font=dict(size=13, color=estilo.TEXTO_SUAVE))
     return fig
@@ -139,30 +175,36 @@ def mapa(df: pd.DataFrame, geo: dict, seleccion: str, nombre_valor: str) -> go.F
     return fig
 
 
-def ranking(df: pd.DataFrame, valor_pais: float, seleccion: str) -> go.Figure:
-    """Barras horizontales ordenadas, con una línea en el valor del país.
+def ranking(df: pd.DataFrame, valor_pais: float, seleccion: str, perfil: str) -> go.Figure:
+    """Ranking de provincias con el país metido como una barra gris más.
 
-    df (ya ordenado): provincia, etiqueta, valor, color.
+    df: provincia, etiqueta y valor (sin ordenar). Las provincias que quedan arriba de
+    la barra gris tienen más que el país; las de abajo, menos.
     """
-    elegida = df["provincia"] == seleccion
+    filas = pd.concat([
+        df[["provincia", "etiqueta", "valor"]],
+        pd.DataFrame([{"provincia": "", "etiqueta": "Todo el país", "valor": valor_pais}]),
+    ]).sort_values("valor", ascending=False, kind="stable")
+    es_pais = filas["provincia"] == ""
+    elegida = filas["provincia"] == seleccion
+    color = estilo.COLOR_COMPARACION.get(perfil, estilo.ACENTO)
     fig = go.Figure()
     fig.add_bar(
-        x=df["valor"], y=df["etiqueta"], orientation="h",
-        marker=dict(color=df["color"], cornerradius=4,
+        x=filas["valor"], y=filas["etiqueta"], orientation="h",
+        marker=dict(color=[estilo.COLOR_PAIS if p else color for p in es_pais], cornerradius=4,
                     line=dict(color=[estilo.TEXTO if e else "rgba(0,0,0,0)" for e in elegida], width=2)),
-        text=[pct(v) for v in df["valor"]], textposition="outside", cliponaxis=False,
-        textfont=dict(color=estilo.TEXTO, size=12),
-        customdata=df["provincia"],
-        hovertemplate="<b>%{customdata}</b>: %{x:.1f}%<extra></extra>",
+        customdata=[pct(v) for v in filas["valor"]],
+        hovertemplate="<b>%{y}</b>: %{customdata}<extra></extra>",
     )
-    fig.add_vline(x=valor_pais, line=dict(color=estilo.LINEA_PAIS, width=2))
-    fig.add_annotation(x=valor_pais, y=1, yref="paper", yanchor="bottom", showarrow=False,
-                       text=f"País {pct(valor_pais)}", font=dict(size=12, color=estilo.TEXTO))
-    etiquetas = [f"<b>{t}</b>" if e else t for t, e in zip(df["etiqueta"], elegida)]
-    fig.update_yaxes(autorange="reversed", showgrid=False, showline=False,
-                     tickvals=df["etiqueta"], ticktext=etiquetas, tickfont=dict(size=13))
-    fig.update_xaxes(range=[0, df["valor"].max() * 1.15])
-    fig.update_layout(showlegend=False, bargap=0.3, height=26 * len(df) + 40, margin=dict(l=8, r=8, t=26, b=4))
+    for etiqueta, valor, e, p in zip(filas["etiqueta"], filas["valor"], elegida, es_pais):
+        texto = f"<b>{pct(valor)}</b>" if (e or p) else pct(valor)
+        fig.add_annotation(x=1, xref="paper", xanchor="left", xshift=10, y=etiqueta, yref="y", showarrow=False,
+                           text=texto, font=dict(size=12, color=estilo.TEXTO))
+    etiquetas = [f"<b>{t}</b>" if (e or p) else t for t, e, p in zip(filas["etiqueta"], elegida, es_pais)]
+    fig.update_yaxes(autorange="reversed", showgrid=False, showline=True, linecolor=estilo.LINEA_EJE,
+                     tickvals=filas["etiqueta"], ticktext=etiquetas, tickfont=dict(size=13), ticklabelstandoff=8)
+    fig.update_xaxes(range=[0, filas["valor"].max() * 1.04])
+    fig.update_layout(showlegend=False, bargap=0.3, height=26 * len(filas) + 16, margin=dict(l=8, r=58, t=4, b=4))
     _sin_ejes(fig)
     return fig
 

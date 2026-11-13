@@ -36,9 +36,9 @@ COLUMNAS_MODELO = list(VARIABLES_MODELO)
 # --- Variables que NO entran al modelo y se usan para describir los grupos ---
 # nombre -> (columna, valor que cuenta como "sí", descripción)
 VARIABLES_CONTEXTO = {
-    "padres_no_comprenden": ("qn56", 2, "Sus padres no suelen entender sus problemas"),
+    "padres_no_comprenden": ("qn56", 2, "Padres no suelen entenderlo"),
     "sin_amigos": ("qn27", 1, "No tiene amigos cercanos"),
-    "hambre": ("qn6", 1, "Pasa hambre seguido por falta de comida en casa"),
+    "hambre": ("qn6", 1, "Pasa hambre por falta de comida"),
 }
 
 # --- Provincias: dígitos 5 y 6 de stratum, en orden alfabético -----------------

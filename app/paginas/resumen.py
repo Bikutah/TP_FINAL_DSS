@@ -34,6 +34,6 @@ ui.callout(
 )
 
 with ui.tarjeta("edad"):
-    ui.titulo_tarjeta("Cómo cambian con la edad", "Cada barra es el 100% de los estudiantes de esa edad.")
+    ui.titulo_tarjeta("¿En qué perfil está cada edad?", "Cada barra suma 100%: todos los estudiantes de esa edad.")
     ui.referencias([("punto", estilo.COLOR_PERFIL[p], p) for p in perfiles["perfil"]])
     graficos.mostrar(graficos.barras_apiladas(edad, [f"{e} años" for e in edad.index]))

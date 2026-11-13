@@ -105,3 +105,4 @@ def referencias_mapa():
 
 def nota(texto: str):
     st.html(f'<p class="dss-nota">{escape(texto)}</p>')
+

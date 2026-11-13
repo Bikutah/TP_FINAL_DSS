@@ -66,7 +66,7 @@ def calcular(prep: DatosPreparados, modelo: ResultadoModelo) -> dict[str, pd.Dat
     centroides = centroides.reset_index()
 
     # contexto_por_perfil.csv
-    variables = {"mujer": "Mujeres"} | {k: v[2] for k, v in config.VARIABLES_CONTEXTO.items()}
+    variables = {"mujer": "Es mujer"} | {k: v[2] for k, v in config.VARIABLES_CONTEXTO.items()}
     filas = []
     for var, desc in variables.items():
         fila = {"variable": var, "descripcion": desc}

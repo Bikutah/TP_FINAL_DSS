@@ -2,6 +2,7 @@
 
 from html import escape
 
+import pandas as pd
 import streamlit as st
 
 from componentes import datos, estilo, graficos, ui
@@ -15,14 +16,14 @@ sexo = datos.por_sexo()
 
 ui.encabezado(
     "¿Qué tiene cada perfil?",
-    "Elegí un perfil para ver qué porcentaje de sus estudiantes responde que sí a cada pregunta, "
-    "comparado con el total del país.",
+    "Elegí un perfil para ver en qué se diferencia del resto del país.",
 )
 
 perfil = st.segmented_control(
     "Perfil", estilo.PERFILES, default="Consumo de riesgo", required=True,
     key="perfil_perfiles", label_visibility="collapsed",
 )
+color = estilo.COLOR_PERFIL[perfil]
 
 # --- Perfil elegido --------------------------------------------------------
 fila = perfiles.loc[perfil]
@@ -37,38 +38,53 @@ st.html(
     f'<span class="dss-chip" style="color:{tono}">{escape(chip)}</span></section>'
 )
 
-# --- Vector de promedios ---------------------------------------------------
-with ui.tarjeta("vector"):
-    ui.titulo_tarjeta("¿Qué responde que sí?", "Vector de promedios del grupo: % de sus estudiantes que responde que sí.")
-    ui.referencias([("barrita", estilo.COLOR_PERFIL[perfil], perfil), ("rayita", "", "Total del país")])
-    for dimension, filas in centroides.groupby("dimension", sort=False):
-        st.html(f'<p class="dss-grupo">{escape(dimension)}</p>')
-        graficos.mostrar(graficos.barras_vector_promedio(filas, perfil), key=f"vector_{dimension}")
+# --- Perfil contra el país ---------------------------------------------------
+# Los 15 indicadores del modelo y, al final, las preguntas de contexto, todos con el mismo gráfico
+ctx = contexto.rename(columns={"variable": "indicador"}).assign(
+    dimension="Otras características (no se usaron para armar los grupos)")
+comparacion = pd.concat([centroides, ctx], ignore_index=True)
 
-# --- Cruces ----------------------------------------------------------------
-col_edad, col_sexo, col_ctx = st.columns(3)
+with ui.tarjeta("vector"):
+    ui.titulo_tarjeta(f"{perfil} contra todo el país", "% que respondió que sí a cada pregunta")
+    ui.referencias([("barrita", estilo.COLOR_COMPARACION[perfil], perfil),
+                    ("barrita", estilo.COLOR_PAIS, "Todo el país")])
+    grupos = list(comparacion.groupby("dimension", sort=False))
+    for i, (dimension, filas) in enumerate(grupos):
+        st.html(f'<p class="dss-grupo">{escape(dimension)}</p>')
+        graficos.mostrar(
+            graficos.barras_contra_pais(filas["descripcion"].tolist(), filas[perfil].tolist(),
+                                        filas["Total país"].tolist(), perfil,
+                                        mostrar_escala=i == len(grupos) - 1),
+            key=f"vector_{i}",
+        )
+
+
+# --- Por edad y por sexo -----------------------------------------------------
+def tendencia(valores) -> str:
+    """Título que resume cómo cambia el perfil con la edad."""
+    primero, ultimo = valores.iloc[0], valores.iloc[-1]
+    pico = valores.idxmax()
+    if valores.max() - max(primero, ultimo) >= 3:
+        return f"Llega al máximo a los {pico} años"
+    if ultimo - primero >= 3:
+        return "Crece con la edad"
+    if primero - ultimo >= 3:
+        return "Baja con la edad"
+    return "Parecido en todas las edades"
+
+
+col_edad, col_sexo = st.columns(2, gap="medium")
 
 with col_edad, ui.tarjeta("edad"):
-    ui.titulo_tarjeta("Por edad", "% de cada edad que está en este perfil")
+    ui.titulo_tarjeta(tendencia(edad[perfil]), "% de cada edad que está en este perfil")
     graficos.mostrar(graficos.barras_verticales([str(e) for e in edad.index], edad[perfil].tolist(),
-                                                estilo.COLOR_PERFIL[perfil], titulo_x="Edad (años)"))
+                                                color, titulo_x="Edad (años)"))
 
 with col_sexo, ui.tarjeta("sexo"):
-    ui.titulo_tarjeta("Por sexo", "% de mujeres y de varones que está en este perfil")
     mujeres, varones = sexo.loc["Mujer", perfil], sexo.loc["Varón", perfil]
-    graficos.mostrar(graficos.barras_horizontales(["Mujeres", "Varones"], [mujeres, varones],
-                                                  estilo.COLOR_PERFIL[perfil]))
     if abs(mujeres - varones) < 1.5:
-        st.write("Es parecido en mujeres y en varones.")
+        titulo = "Parecido en mujeres y varones"
     else:
-        mas = "mujeres" if mujeres > varones else "varones"
-        st.write(f"Es más común en {mas} ({pct(max(mujeres, varones))} contra {pct(min(mujeres, varones))}).")
-
-with col_ctx, ui.tarjeta("contexto"):
-    ui.titulo_tarjeta("Contexto", "Preguntas que no entran al modelo y sirven para describir al grupo")
-    filas_html = "".join(
-        f'<div class="dss-fila"><span class="etiqueta">{escape(c["descripcion"])}</span>'
-        f'<span class="valores"><b>{pct(c[perfil])}</b><span>país {pct(c["Total país"])}</span></span></div>'
-        for _, c in contexto.iterrows()
-    )
-    st.html(filas_html)
+        titulo = f"Más común en {'mujeres' if mujeres > varones else 'varones'}"
+    ui.titulo_tarjeta(titulo, "% de todas las mujeres y de todos los varones que está en este perfil")
+    graficos.mostrar(graficos.barras_horizontales(["Mujeres", "Varones"], [mujeres, varones], color, alto=180))
