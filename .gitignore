@@ -1,0 +1,13 @@
+# Datos de la EMSE: cada integrante los pone a mano en data/raw/
+data/raw/*
+!data/raw/.gitkeep
+
+# Entorno de Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Sistema
+.DS_Store
+Thumbs.db
