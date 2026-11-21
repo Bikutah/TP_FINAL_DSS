@@ -22,7 +22,8 @@ class ResultadoModelo:
 
 def elegir_k(X: np.ndarray, pesos: np.ndarray, rng: np.random.Generator) -> tuple[dict, dict, dict]:
     """Inercias del codo y silueta (sobre una muestra) para cada k."""
-    muestra = rng.choice(len(X), size=config.MUESTRA_SILUETA, replace=False)
+    # Si hay menos estudiantes que el tamaño de la muestra (por ejemplo, una sola provincia), se usan todos
+    muestra = rng.choice(len(X), size=min(config.MUESTRA_SILUETA, len(X)), replace=False)
     codo, silueta, etiquetas_por_k = {}, {}, {}
     for k in config.K_CODO:
         modelo = KMeans(n_clusters=k, n_init=config.N_INIT_CODO, random_state=config.SEMILLA)
@@ -55,7 +56,7 @@ def entrenar_kmeans(X: np.ndarray, pesos: np.ndarray) -> tuple[KMeans, int, list
 
 def dendrograma_de_control(X: np.ndarray, etiquetas_kmeans: np.ndarray, rng: np.random.Generator) -> dict:
     """Ward sobre una muestra: sirve para ver si cortar en k grupos es razonable."""
-    muestra = rng.choice(len(X), size=config.MUESTRA_DENDROGRAMA, replace=False)
+    muestra = rng.choice(len(X), size=min(config.MUESTRA_DENDROGRAMA, len(X)), replace=False)
     enlaces = linkage(X[muestra], method="ward")
     alturas = enlaces[:, 2]
     corte = float((alturas[-config.K] + alturas[-config.K + 1]) / 2)
@@ -65,7 +66,7 @@ def dendrograma_de_control(X: np.ndarray, etiquetas_kmeans: np.ndarray, rng: np.
         "icoord": dibujo["icoord"],
         "dcoord": dibujo["dcoord"],
         "corte": corte,
-        "muestra": config.MUESTRA_DENDROGRAMA,
+        "muestra": int(len(muestra)),
         "ari_con_kmeans": float(adjusted_rand_score(etiquetas_kmeans[muestra], grupos)),
     }
 

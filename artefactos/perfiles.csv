@@ -1,6 +1,6 @@
-perfil,pct,estudiantes_estimados,muestra,descripcion,accion
-Sin problemáticas marcadas,37.1,968172,17576,Bajo en todos los indicadores,Sin acción
-Alcohol sin borracheras,16.1,420150,7854,"Toma alcohol, nunca se emborrachó",Prevención de consumo
-Consumo de riesgo,22.4,584557,10881,"Borracheras, tabaco y marihuana",Prevención de consumo
-Malestar emocional,13.3,347081,6428,"Ideación suicida, soledad, bullying",Salud mental y contención
-Violencia entre pares,11.0,287059,5206,Bullying y ciberacoso,Convivencia escolar y bullying
+perfil,pct,estudiantes_estimados,muestra,descripcion,accion,cuando
+Baja prevalencia de problemáticas,37.1,968172,17576,Bajo en todos los indicadores,Sin acción,
+Alcohol sin borracheras,16.1,420150,7854,"Toma alcohol, nunca se emborrachó",Prevención de consumo,"En 1.º y 2.º año, antes del salto de los 15."
+Consumo de riesgo,22.4,584557,10881,"Borracheras, tabaco y marihuana",Prevención de consumo,"En 1.º y 2.º año, antes del salto de los 15."
+Malestar emocional,13.3,347081,6428,"Ideación suicida, soledad, bullying",Salud mental y contención,"En todos los años, con foco en mujeres y en la familia."
+Violencia entre pares,11.0,287059,5206,Bullying y ciberacoso,Convivencia escolar y bullying,En todos los años.

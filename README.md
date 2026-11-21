@@ -73,6 +73,8 @@ dss-salud-escolar/
 │   └── config.toml              # tema de la app (colores y tipografía)
 ├── data/
 │   ├── raw/                     # data_set.csv va acá (NO se sube, ver sección 7)
+│   ├── ejemplo/
+│   │   └── data_set_falso.csv   # dataset inventado, mismo formato, para probar
 │   └── geo/
 │       └── provincias.geojson   # contornos de las provincias para el mapa (ya está)
 ├── notebooks/                   # las notebooks de Colab (exploración y justificación)
@@ -85,7 +87,8 @@ dss-salud-escolar/
 │   ├── reglas.py                # nombres de perfiles y acción sugerida
 │   └── resultados.py            # cruces por provincia, edad y sexo
 ├── scripts/
-│   └── entrenar.py              # corre todo y genera artefactos/
+│   ├── entrenar.py              # corre todo y genera artefactos/
+│   └── generar_dataset_falso.py # arma data/ejemplo/data_set_falso.csv
 ├── artefactos/                  # salida del pipeline (SÍ se sube)
 ├── pruebas/
 │   └── probar_tema.py           # prueba rápida del entorno, el tema y el mapa
@@ -95,6 +98,7 @@ dss-salud-escolar/
     │   ├── resumen.py
     │   ├── perfiles.py
     │   ├── provincias.py
+    │   ├── clasificar.py        # usa el modelo entrenado en vivo
     │   └── modelo.py
     ├── componentes/
     │   ├── datos.py             # carga de artefactos (con caché)
@@ -136,7 +140,7 @@ La app **no importa nada de `src/`**: solo lee `artefactos/` y `data/geo/`. Así
 | `acciones_por_provincia.csv` | Perfil que más supera al país, acción sugerida, edad y alcance | Provincias |
 | `metricas_modelo.json` | Inercias del codo, silueta, inercia de cada semilla, parámetros | Modelo |
 | `dendrograma.json` | Coordenadas del dendrograma y altura del corte | Modelo |
-| `modelo_kmeans.joblib` | El modelo entrenado | Nadie en el MVP (queda para el futuro) |
+| `modelo_kmeans.joblib` | El modelo entrenado (los 5 centroides), las columnas y el nombre de cada grupo | Clasificar un estudiante |
 
 ---
 
@@ -160,8 +164,16 @@ Cada pantalla responde **una sola pregunta** y tiene pocos elementos, para no ca
 **¿Dónde conviene actuar y con qué?**
 - Selector de perfil.
 - **Mapa de Argentina** con cada provincia pintada según cuánto se aleja del país (escala divergente: un color si está peor, otro si está mejor).
-- Ranking en barras de las 24 provincias, con una línea en el valor del país.
-- Selector de provincia: acción sugerida, mezcla de perfiles y detalle por edad.
+- Ranking en barras de las 24 provincias, con el país como una barra gris más.
+- Detalle de la provincia: arriba y en grande la **acción sugerida** (con el porqué), después el perfil elegido en la provincia contra el país, la mezcla de perfiles y el perfil por edad.
+
+### Clasificar un estudiante (`paginas/clasificar.py`)
+**¿A qué perfil pertenece un estudiante?**
+- Es la única pantalla que **usa el modelo en vivo**: carga `artefactos/modelo_kmeans.joblib`.
+- Cada pregunta se responde **Sí, No o Sin dato**: no hace falta completar las 15. El modelo mide la distancia a cada centroide solo en las preguntas respondidas y asigna el perfil más cercano. Con las 15 respondidas da lo mismo que `predict`.
+- Se puede cargar un estudiante típico de cada perfil o dejar todo sin dato.
+- Muestra la acción sugerida para ese estudiante, cuántas preguntas se usaron, si la asignación es clara o está en el límite entre dos perfiles, el vector (1, 0 o – para sin dato) y la distancia a cada uno de los 5 centroides.
+- Sirve para explicar en la defensa cómo funciona el k-means por dentro.
 
 ### Cómo se armó el modelo (`paginas/modelo.py`)
 **¿Cómo se hicieron los grupos y cuánto podemos confiar?**
@@ -210,6 +222,7 @@ Es un punto de partida para el equipo que decide, no una orden: la decisión es 
   - la geometría está simplificada (pesa 119 KB).
 
   El mapa se dibuja en `componentes/graficos.py` (función `mapa`). Plotly necesita además un mapa base del mundo: lo sirve la propia app desde `app/static/`, así el mapa anda **sin internet**. Las tipografías sí se bajan de Google Fonts; si no hay conexión, se usa la letra del sistema y todo lo demás funciona igual.
+- **`data_set_falso.csv`** (en `data/ejemplo/`): 20.000 estudiantes **inventados** con el mismo formato que la EMSE. Sirve para probar el pipeline sin los datos reales y para ver que la app cambia cuando cambian los datos. Lo genera `scripts/generar_dataset_falso.py`: cada estudiante pertenece a un perfil escondido y responde con las probabilidades de ese perfil, con más consumo de riesgo que en la realidad a propósito. Cuando la app muestra resultados del dataset falso, aparece un aviso arriba de todo.
 - **Nombres deducidos**: CABA, Formosa, La Pampa, Neuquén, Río Negro y San Luis se deducen del orden del código en `stratum`. Hay que confirmarlos con el informe oficial antes de la entrega.
 
 ---
@@ -241,6 +254,14 @@ python scripts/entrenar.py
 ```
 
 `entrenar.py` muestra el % de cada perfil y avisa si alguno no coincide con lo que dieron las notebooks.
+
+Para probar con el dataset falso (pisa `artefactos/` con resultados inventados):
+
+```bash
+python scripts/entrenar.py --datos data/ejemplo/data_set_falso.csv
+streamlit run app/Inicio.py          # aparece un aviso amarillo: datos falsos
+git checkout -- artefactos           # vuelve a los resultados reales
+```
 
 Si algo no anda, `streamlit run pruebas/probar_tema.py` revisa paquetes, tema, GeoJSON y datos, y dice qué falta.
 
@@ -298,8 +319,7 @@ Streamlit va con versión mínima porque el tema usa opciones nuevas (tipografí
 
 ## 10. Fuera del MVP (para después)
 
-Ideas que quedaron afuera para llegar con el plazo. Todas aprovechan el modelo guardado en `modelo_kmeans.joblib`:
-- **Simulador de estudiante**: marcar las respuestas de un estudiante ficticio y ver a qué perfil pertenece.
+Ideas que quedaron afuera para llegar con el plazo (la pantalla "Clasificar un estudiante" ya usa el modelo guardado):
 - **Selector de k**: ver cómo cambian los grupos con 4, 5 o 6 perfiles.
 - **Cargar datos nuevos**: subir un CSV con el mismo formato y asignar un perfil a cada estudiante.
 - **Publicarla online** (por ejemplo, en Streamlit Community Cloud).

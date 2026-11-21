@@ -209,6 +209,27 @@ def ranking(df: pd.DataFrame, valor_pais: float, seleccion: str, perfil: str) ->
     return fig
 
 
+# --- Clasificar un estudiante -------------------------------------------------
+def distancias(tabla: pd.DataFrame, ganador: str) -> go.Figure:
+    """Distancia del estudiante a cada centroide. El perfil asignado va en color y el resto en gris."""
+    es_ganador = tabla["perfil"] == ganador
+    fig = go.Figure()
+    fig.add_bar(
+        x=tabla["distancia"], y=tabla["perfil"], orientation="h",
+        marker=dict(color=[estilo.COLOR_COMPARACION[p] if g else estilo.COLOR_PAIS
+                           for p, g in zip(tabla["perfil"], es_ganador)], cornerradius=4),
+        text=[f"<b>{num(v, 2)}</b>" if g else num(v, 2) for v, g in zip(tabla["distancia"], es_ganador)],
+        textposition="outside", cliponaxis=False, textfont=dict(color=estilo.TEXTO, size=13), hoverinfo="skip",
+    )
+    etiquetas = [f"<b>{p}</b>" if g else p for p, g in zip(tabla["perfil"], es_ganador)]
+    fig.update_yaxes(autorange="reversed", showgrid=False, showline=True, linecolor=estilo.LINEA_EJE,
+                     tickvals=tabla["perfil"], ticktext=etiquetas, tickfont=dict(size=14), ticklabelstandoff=8)
+    fig.update_xaxes(range=[0, max(tabla["distancia"].max() * 1.15, 1)])
+    fig.update_layout(showlegend=False, bargap=0.35, height=48 * len(tabla) + 16, margin=dict(l=8, r=50, t=4, b=4))
+    _sin_ejes(fig)
+    return fig
+
+
 # --- Modelo ----------------------------------------------------------------
 def codo(inercias: dict, k_elegido: int) -> go.Figure:
     ks = sorted(int(k) for k in inercias)

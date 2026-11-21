@@ -55,6 +55,7 @@ def calcular(prep: DatosPreparados, modelo: ResultadoModelo) -> dict[str, pd.Dat
         "muestra": [int((datos["perfil"] == p).sum()) for p in reglas.PERFILES],
         "descripcion": [reglas.DESCRIPCION[p] for p in reglas.PERFILES],
         "accion": [reglas.ACCIONES[p][0] for p in reglas.PERFILES],
+        "cuando": [reglas.ACCIONES[p][1] for p in reglas.PERFILES],
     })
 
     # centroides.csv (% que responde que sí en cada perfil y en el país)

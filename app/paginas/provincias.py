@@ -87,39 +87,50 @@ with ui.tarjeta("detalle"):
     info = provincias.loc[seleccion]
     accion = acciones.loc[seleccion]
     with izq:
+        st.html('<p class="dss-grupo">Detalle de la provincia</p>')
         st.subheader(seleccion + ("*" if info["deducida"] else ""))
         st.caption(f"{ui.miles(info['estudiantes'])} estudiantes · {ui.num(info['respuestas'], 0)} respuestas")
 
-    c_dato, c_mezcla, c_edad = st.columns(3, gap="medium")
+    # 1. La acción sugerida va primero y en grande: es la salida del DSS para quien decide
+    prioritario = accion["perfil_prioritario"]
+    if isinstance(prioritario, str) and prioritario:
+        por_que = (f"{prioritario} es el perfil en el que {seleccion} más supera al país: "
+                   f"{pct(info[prioritario])} contra {pct(pais[prioritario])} "
+                   f"(+{ui.num(accion['exceso_pct'], 0)}%).")
+        cuando = accion["cuando"]
+    else:
+        por_que = "Ningún perfil problemático supera al país en más de 5%."
+        cuando = "Mantener el seguimiento general."
+    ui.accion_sugerida(seleccion, accion["accion"], cuando, por_que)
 
-    with c_dato:
-        nivel = estilo.categoria_vs_pais(info[perfil], valor_pais)
-        cuadrito = estilo.CATEGORIAS_VS_PAIS[nivel][1]
-        por_que = ""
-        if accion["perfil_prioritario"] and not pd.isna(accion["perfil_prioritario"]):
-            por_que = (f'<span class="texto">Porque es donde {escape(seleccion)} más supera al país: '
-                       f'{escape(accion["perfil_prioritario"])} (+{ui.num(accion["exceso_pct"], 0)}%).</span>')
-        st.html(
-            f'<div class="dss-caja dato"><span class="chico">{escape(perfil)}</span>'
-            f'<span class="grande">{pct(info[perfil])}</span>'
-            f'<span class="texto"><span class="dss-cuadrito" style="background:{cuadrito}"></span> '
-            f'{COMPARACION[nivel]} (país {pct(valor_pais)})</span></div>'
-            f'<div style="height:14px"></div>'
-            f'<div class="dss-caja accion"><span class="chico">Acción sugerida</span>'
-            f'<span class="accion-titulo">{escape(accion["accion"])}</span>'
-            f'<span class="texto">{escape(accion["cuando"])}</span>{por_que}</div>'
-        )
+    # 2. Tres datos rápidos del perfil elegido
+    nivel = estilo.categoria_vs_pais(info[perfil], valor_pais)
+    cuadrito = estilo.CATEGORIAS_VS_PAIS[nivel][1]
+    st.html(
+        '<section class="dss-kpis" aria-label="Datos del perfil elegido">'
+        f'<div class="dss-kpi"><span class="texto">{escape(perfil)} en {escape(seleccion)}</span>'
+        f'<span class="valor">{pct(info[perfil])}</span></div>'
+        f'<div class="dss-kpi"><span class="texto">{escape(perfil)} en el país</span>'
+        f'<span class="valor">{pct(valor_pais)}</span></div>'
+        f'<div class="dss-kpi"><span class="texto">Comparación</span>'
+        f'<span class="valor chica"><span class="dss-cuadrito" style="background:{cuadrito}"></span>'
+        f'{COMPARACION[nivel]}</span></div></section>'
+    )
+
+    # 3. Los dos gráficos, con más lugar
+    c_mezcla, c_edad = st.columns(2, gap="large")
 
     with c_mezcla:
-        ui.titulo_tarjeta(f"¿Cómo se reparte {seleccion}?", "Cada barra suma 100%. Abajo, el país.")
+        ui.titulo_tarjeta(f"¿Cómo se reparten los estudiantes de {seleccion}?",
+                          "Cada barra suma 100%. Arriba la provincia, abajo el país.")
         mezcla = pd.DataFrame([info[estilo.PERFILES], pais[estilo.PERFILES]])
         graficos.mostrar(graficos.barras_apiladas(mezcla, [seleccion, "País"], alto_fila=56))
         ui.referencias([("punto", estilo.COLOR_PERFIL[p], p) for p in estilo.PERFILES])
 
     with c_edad:
-        ui.titulo_tarjeta(f"{perfil} por edad", f"% de cada edad en este perfil")
+        ui.titulo_tarjeta(f"{perfil} por edad", "% de cada edad que está en este perfil")
         ui.referencias([("barrita", estilo.COLOR_COMPARACION[perfil], seleccion),
-                        ("barrita", estilo.COLOR_PAIS, "País")])
+                        ("barrita", estilo.COLOR_PAIS, "Todo el país")])
         filas = por_prov_edad[por_prov_edad["provincia"] == seleccion].set_index("edad")
         graficos.mostrar(graficos.columnas_contra_pais(
             [str(e) for e in filas.index], filas[perfil].tolist(), edad_pais.loc[filas.index, perfil].tolist(),

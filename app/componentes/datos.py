@@ -1,7 +1,10 @@
 """Carga de artefactos (los resultados del modelo). La app no calcula nada del modelo."""
 
 import json
+import warnings
 from pathlib import Path
+
+import joblib
 
 import pandas as pd
 import streamlit as st
@@ -13,7 +16,7 @@ RUTA_GEO = RAIZ / "data" / "geo" / "provincias.geojson"
 NECESARIOS = [
     "perfiles.csv", "centroides.csv", "contexto_por_perfil.csv", "perfiles_por_edad.csv",
     "perfiles_por_sexo.csv", "perfiles_por_provincia.csv", "perfiles_por_provincia_y_edad.csv",
-    "acciones_por_provincia.csv", "metricas_modelo.json", "dendrograma.json",
+    "acciones_por_provincia.csv", "metricas_modelo.json", "dendrograma.json", "modelo_kmeans.joblib",
 ]
 
 
@@ -83,3 +86,13 @@ def metricas() -> dict:
 
 def dendrograma() -> dict:
     return _json("dendrograma")
+
+
+@st.cache_resource
+def modelo() -> dict:
+    """El k-means entrenado por scripts/entrenar.py: {"modelo", "columnas", "nombres"}."""
+    with warnings.catch_warnings():
+        # Si la versión de scikit-learn es otra, avisa pero el modelo carga igual.
+        # Para sacar el aviso, volver a correr scripts/entrenar.py en esta compu.
+        warnings.simplefilter("ignore")
+        return joblib.load(ARTEFACTOS / "modelo_kmeans.joblib")

@@ -23,7 +23,7 @@ LINEA_PAIS = "#2B2118"  # la marca del total del país en las barras
 # --- Perfiles -------------------------------------------------------------
 # Orden fijo. El color sigue al perfil, nunca a su posición en un ranking.
 PERFILES = [
-    "Sin problemáticas marcadas",
+    "Baja prevalencia de problemáticas",
     "Alcohol sin borracheras",
     "Consumo de riesgo",
     "Malestar emocional",
@@ -38,9 +38,9 @@ TINTE_PERFIL = dict(zip(PERFILES, ["#F1ECE5", "#FBF0D9", "#F8E1D8", "#ECE6F3", "
 TEXTO_SOBRE_PERFIL = dict(zip(PERFILES, ["#2B2118", "#2B2118", "#FFFFFF", "#FFFFFF", "#2B2118"]))
 
 # Para comparar un perfil contra el país con dos barras: el país va en gris y el
-# perfil en su color. "Sin problemáticas" usa un tono más oscuro para no confundirse con el gris.
+# perfil en su color. "Baja prevalencia" usa un tono más oscuro para no confundirse con el gris.
 COLOR_PAIS = "#CFC7BC"
-COLOR_COMPARACION = {**COLOR_PERFIL, "Sin problemáticas marcadas": "#8C7B69"}
+COLOR_COMPARACION = {**COLOR_PERFIL, "Baja prevalencia de problemáticas": "#8C7B69"}
 
 # --- Escala divergente: provincia contra el país ------------------------
 # Se mide en % del valor del país: (provincia - país) / país.

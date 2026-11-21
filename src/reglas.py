@@ -8,7 +8,7 @@ import pandas as pd
 
 # Orden fijo en el que se muestran los perfiles en toda la app
 PERFILES = [
-    "Sin problemáticas marcadas",
+    "Baja prevalencia de problemáticas",
     "Alcohol sin borracheras",
     "Consumo de riesgo",
     "Malestar emocional",
@@ -16,7 +16,7 @@ PERFILES = [
 ]
 
 DESCRIPCION = {
-    "Sin problemáticas marcadas": "Bajo en todos los indicadores",
+    "Baja prevalencia de problemáticas": "Bajo en todos los indicadores",
     "Alcohol sin borracheras": "Toma alcohol, nunca se emborrachó",
     "Consumo de riesgo": "Borracheras, tabaco y marihuana",
     "Malestar emocional": "Ideación suicida, soledad, bullying",
@@ -25,7 +25,7 @@ DESCRIPCION = {
 
 # perfil -> (acción, a quién / cuándo)
 ACCIONES = {
-    "Sin problemáticas marcadas": ("Sin acción", ""),
+    "Baja prevalencia de problemáticas": ("Sin acción", ""),
     "Alcohol sin borracheras": ("Prevención de consumo", "En 1.º y 2.º año, antes del salto de los 15."),
     "Consumo de riesgo": ("Prevención de consumo", "En 1.º y 2.º año, antes del salto de los 15."),
     "Malestar emocional": ("Salud mental y contención", "En todos los años, con foco en mujeres y en la familia."),
@@ -50,12 +50,12 @@ def nombrar(centroide: pd.Series) -> str:
         return "Consumo de riesgo"
     if centroide["alcohol"] > 0.5:
         return "Alcohol sin borracheras"
-    return "Sin problemáticas marcadas"
+    return "Baja prevalencia de problemáticas"
 
 
 def accion_sugerida(pct_provincia: pd.Series, pct_pais: pd.Series) -> dict:
     """Acción para una provincia según el perfil problemático en el que más supera al país."""
-    problematicos = [p for p in PERFILES if p != "Sin problemáticas marcadas"]
+    problematicos = [p for p in PERFILES if p != "Baja prevalencia de problemáticas"]
     exceso = {p: (pct_provincia[p] - pct_pais[p]) / pct_pais[p] for p in problematicos}
     perfil = max(exceso, key=exceso.get)
     if exceso[perfil] <= UMBRAL_PRIORIDAD:

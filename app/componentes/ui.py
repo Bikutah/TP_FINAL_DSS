@@ -106,3 +106,14 @@ def referencias_mapa():
 def nota(texto: str):
     st.html(f'<p class="dss-nota">{escape(texto)}</p>')
 
+
+def accion_sugerida(lugar: str, accion: str, cuando: str, por_que: str):
+    """Franja grande con la acción que sugiere el DSS para una provincia."""
+    st.html(
+        '<section class="dss-accion" aria-label="Acción sugerida">'
+        '<span class="icono" aria-hidden="true">✓</span>'
+        f'<div class="principal"><span class="rotulo">Acción sugerida para {escape(lugar)}</span>'
+        f'<span class="titulo">{escape(accion)}</span><span class="cuando">{escape(cuando)}</span></div>'
+        f'<div class="porque"><strong>¿Por qué esta acción?</strong><span>{escape(por_que)}</span></div>'
+        "</section>"
+    )
