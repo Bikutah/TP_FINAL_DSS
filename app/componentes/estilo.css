@@ -88,6 +88,24 @@ div[class*="st-key-tarjeta"] { background: #FFFFFF; border-radius: 18px; padding
 .dss-vector .chico { font-size: 0.82rem; color: #6E5F50; }
 .dss-vector code { font-size: 0.95rem; letter-spacing: 0; white-space: nowrap; background: none; color: #2B2118; padding: 0; }
 .dss-elegido .rotulo { font-size: 0.82rem; font-weight: 700; color: #4A3D31; }
+/* Advertencia de riesgo suicida: visible pero sobria, sin alarmar */
+.dss-advertencia { background: #F6EFE5; border-left: 3px solid #B58A4C; border-radius: 10px; padding: 10px 16px; font-size: 0.88rem; line-height: 1.5; color: #4A3D31; }
+.dss-advertencia strong { color: #2B2118; }
+
+/* Clasificar tiene dos columnas (preguntas y panel): usa casi todo el ancho de la pantalla */
+.block-container:has(.st-key-panel_resultado) { max-width: 1680px; padding-left: 2.5rem; padding-right: 2.5rem; }
+
+/* Panel de resultado: la columna derecha acompaña el scroll mientras se responde */
+[data-testid="stColumn"]:has(.st-key-panel_resultado) { position: sticky; top: 4.5rem; align-self: flex-start; }
+@media (max-width: 640px) { [data-testid="stColumn"]:has(.st-key-panel_resultado) { position: static; } }
+.dss-accion-vacia { border: 2px dashed #E6DACB; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; }
+.dss-accion-vacia .rotulo { font-size: 0.88rem; font-weight: 700; color: #6E5F50; }
+.dss-accion-vacia .titulo { font-family: "Nunito", sans-serif; font-size: 1.5rem; font-weight: 800; line-height: 1.2; color: #B9AA96; }
+.dss-progreso { display: flex; flex-direction: column; gap: 6px; }
+.dss-progreso .valor { font-family: "Nunito", sans-serif; font-size: 1.8rem; font-weight: 800; line-height: 1.1; }
+.dss-progreso .chico { font-size: 0.85rem; line-height: 1.5; color: #6E5F50; }
+.dss-progreso .barra { height: 8px; border-radius: 4px; background: #EDE3D5; overflow: hidden; }
+.dss-progreso .barra i { display: block; height: 100%; background: #2F6F5E; }
 
 /* Acción sugerida (detalle de provincia): lo primero y en grande */
 .dss-accion { background: #24584A; color: #FFFFFF; border-radius: 18px; padding: 24px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px; }

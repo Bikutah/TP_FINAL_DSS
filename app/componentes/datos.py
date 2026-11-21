@@ -16,7 +16,7 @@ RUTA_GEO = RAIZ / "data" / "geo" / "provincias.geojson"
 NECESARIOS = [
     "perfiles.csv", "centroides.csv", "contexto_por_perfil.csv", "perfiles_por_edad.csv",
     "perfiles_por_sexo.csv", "perfiles_por_provincia.csv", "perfiles_por_provincia_y_edad.csv",
-    "acciones_por_provincia.csv", "metricas_modelo.json", "dendrograma.json", "modelo_kmeans.joblib",
+    "acciones_por_provincia.csv", "metricas_modelo.json", "dendrograma.json", "modelo_final.joblib",
 ]
 
 
@@ -90,9 +90,12 @@ def dendrograma() -> dict:
 
 @st.cache_resource
 def modelo() -> dict:
-    """El k-means entrenado por scripts/entrenar.py: {"modelo", "columnas", "nombres"}."""
+    """El modelo final elegido en el notebook evaluacion-modelos-v2 (k-means, k = 5).
+
+    {"modelo": KMeans, "variables": las 15 columnas en orden, "nombres": {grupo: perfil},
+     "riesgo_suicida": indicadores que disparan la advertencia}
+    """
     with warnings.catch_warnings():
-        # Si la versión de scikit-learn es otra, avisa pero el modelo carga igual.
-        # Para sacar el aviso, volver a correr scripts/entrenar.py en esta compu.
+        # Se guardó con scikit-learn 1.9.1. Con otra versión avisa, pero el modelo carga igual.
         warnings.simplefilter("ignore")
-        return joblib.load(ARTEFACTOS / "modelo_kmeans.joblib")
+        return joblib.load(ARTEFACTOS / "modelo_final.joblib")
